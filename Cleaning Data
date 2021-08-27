@@ -1,0 +1,67 @@
+# In this step we have imported different modules that are required for data cleaning. Also we have used a module to suppress warnings. 
+import numpy as np
+import pandas as pd
+import reverse_geocoder as rg
+import warnings 
+warnings.filterwarnings("ignore")
+df = pd.read_csv('../today/Crime_Incidents.csv')
+# We have dropped some columns from our dataset which we do not require.
+to_drop = ['incident_id','incident_description','incident_type_primary', 'clearance_type','location','address_2','city','state','zip','country','Census Tract 1','Census Block 1','Census Block Group 1','created_at','updated_at']
+df.drop(to_drop, inplace = True, axis = 1)
+# We started by looking for missing data values in every column
+missing_values_count = df.isnull().sum()
+# we have replaced all the blank cells with Nan and we have removed the entire row for which their is a Nan cell in 'council_district' column
+df = df.replace(r'^\s+$', np.nan, regex=True)
+df['Council District 1'] = df['Council District 1'].replace('-', np.nan)
+df = df.dropna(axis=0, subset=['Council District 1'])
+# Now that we have removed almost 75% of the rows we have to reindex the rows. we performed reindexing here 
+df.reset_index(drop=True, inplace=True)
+# We found out that there are no duplicate values in our data after performing this operation
+df.duplicated(subset = None, keep = 'first')
+# we have a column named 'incident_datetime' which contain date and time of the incident but we only need the date so we have to add a column 'incident_date' and extract the date from 'incident_datetime' column.
+df['incident_datetime'] = pd.to_datetime(df['incident_datetime'])
+df['incident_date'] = df['incident_datetime'].dt.date
+df.drop('incident_datetime', inplace = True, axis = 1)
+# we have latitude and longitude values in two seperate columns but then we needed a single column which contain both the column. So, we added a column 'coordinates'.
+df['coordinates'] = list(zip(df.latitude, df.longitude))
+df.drop('latitude', inplace = True, axis = 1)
+df.drop('longitude', inplace = True, axis = 1)
+# The column 'address_1' contains the block number and street address. We found out a way to extract the street address from that column.
+df['address_1'] = df['address_1'].str.split(' ').str.get(-2) + ' ' + df['address_1'].str.split(' ').str.get(-1)
+# The column 'day_of_week' contains text in both upper and lower case so we have to change all the text into upper case to perform further operations on that data 
+df['day_of_week']=df['day_of_week'].str.upper()
+# Here, we organised the colummns in such a way that they can be clustered into categories like Time and Area
+df = df[['case_number','parent_incident_type','incident_date','hour_of_day','day_of_week','address_1','Neighborhood 1','Police District 1','Council District 1', 'coordinates']]
+# Now that the columns are in order, we found that some columns are not named properly. we have to rename them for better readability 
+df.columns = ['case_number','parent_incident_type','incident_date','hour_of_day','day_of_week','address','neighborhood','police_district','council_district', 'coordinates']
+#There are seven unique values for 'day_of_week' column, we have assigned numbers ranging from 1 - 7 for a unique value
+# SUNDAY - 1, MONDAY - 2, TUESDAY - 3, WEDNESDAY - 4, THRUSDAY - 5, FRIDAY - 6, SATURDAY - 7.
+df['day_of_week']=df['day_of_week'].str.upper()
+df['day_of_week']=df['day_of_week'].str.replace("SUNDAY","1", regex=False)
+df['day_of_week']=df['day_of_week'].str.replace("MONDAY","2", regex=False)
+df['day_of_week']=df['day_of_week'].str.replace("TUESDAY","3", regex=False)
+df['day_of_week']=df['day_of_week'].str.replace("WEDNESDAY","4", regex=False)
+df['day_of_week']=df['day_of_week'].str.replace("THURSDAY","5", regex=False)
+df['day_of_week']=df['day_of_week'].str.replace("FRIDAY","6", regex=False)
+df['day_of_week']=df['day_of_week'].str.replace("SATURDAY","7", regex=False)
+#There are nine unique values for 'council_district', we have assigned numbers ranging from 1 - 9 for a unique value 
+# FILLMORE - 1, MASTEN - 2, ELLICOTT - 3, LOVEJOY - 4, SOUTH - 5, NORTH - 6, NIAGARA - 7, DELAWARE - 8, UNIVERSITY - 9.
+df['council_district']=df['council_district'].str.upper()
+df['council_district']=df['council_district'].str.replace("FILLMORE","1", regex=False)
+df['council_district']=df['council_district'].str.replace("MASTEN","2", regex=False)
+df['council_district']=df['council_district'].str.replace("ELLICOTT","3", regex=False)
+df['council_district']=df['council_district'].str.replace("LOVEJOY","4", regex=False)
+df['council_district']=df['council_district'].str.replace("SOUTH","5", regex=False)
+df['council_district']=df['council_district'].str.replace("NORTH","6", regex=False)
+df['council_district']=df['council_district'].str.replace("NIAGARA","7", regex=False)
+df['council_district']=df['council_district'].str.replace("DELAWARE","8", regex=False)
+df['council_district']=df['council_district'].str.replace("UNIVERSITY","9", regex=False)
+#There are seven unique values for 'parent_incident_type', we have assigned numbers ranging from 1 - 7 for a unique value
+# Theft - 1, Homicide - 2, Assault - 3, Robbery - 4, Breaking & Entering - 5, Theft of Vehicle - 6, Sexual Offense - 7.
+df['parent_incident_type']=df['parent_incident_type'].str.replace("Homicide","2", regex=False)
+df['parent_incident_type']=df['parent_incident_type'].str.replace("Assault","3", regex=False)
+df['parent_incident_type']=df['parent_incident_type'].str.replace("Robbery","4", regex=False)
+df['parent_incident_type']=df['parent_incident_type'].str.replace("Breaking & Entering","5", regex=False)
+df['parent_incident_type']=df['parent_incident_type'].str.replace("Theft of Vehicle","6", regex=False)
+df['parent_incident_type']=df['parent_incident_type'].str.replace("Sexual Offense","7", regex=False)
+df['parent_incident_type']=df['parent_incident_type'].str.replace("Theft","1", regex=False)
