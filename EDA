@@ -1,0 +1,42 @@
+import numpy as np
+import pandas as pd
+import warnings 
+warnings.filterwarnings("ignore")
+df = pd.read_csv('/Users/sushmareddy/downloads/Cleaned_Crime_Incidents.csv')# import your cleaned dataset
+df.head(5)
+# display the first five rows data.head(5)
+# code for operation and display
+df['parent_incident_type'] = df['parent_incident_type'].astype(int)
+df['council_district'] = df['council_district'].astype(int)
+
+sns.set_style("whitegrid") 
+sns.boxplot(x = 'parent_incident_type', y = 'council_district', data = df)
+# code for operation and display
+df['parent_incident_type'].value_counts()[:20].plot(kind='bar', stacked=True, colormap='Accent')
+# code for operation and display
+import matplotlib.pyplot as plt
+import seaborn as sns 
+fig, axes = plt.subplots(ncols=3, figsize=(12,6))
+g = sns.distplot(df['hour_of_day'],ax=axes[0])
+g = sns.distplot(df['day_of_week'],ax=axes[1])
+g = sns.distplot(df['day_of_month'],ax=axes[2])
+# code for operation and display
+x = df.pivot_table(index='neighborhood',columns='day_of_week',values='parent_incident_type') 
+sns.heatmap(x,cmap='coolwarm')
+# code for operation and display
+#point plot 
+sns.pointplot(x = "police_district", y = "parent_incident_type",  data = df)
+plt.show()
+# code for display and display
+sns.pairplot(df,hue='parent_incident_type',palette='coolwarm')
+# code for operation and display
+sns.violinplot(x='parent_incident_type', y='neighborhood',data=df)
+# code for operation and display
+g = sns.FacetGrid(data=df,col='hour_of_day',row='police_district')
+g.map(sns.displot,'parent_incident_type')
+# code for operation
+sns.catplot(x="day_of_week", y="parent_incident_type", kind = 'bar',data=df, palette = "rainbow")
+# code for operation and display
+f,ax = plt.subplots(figsize =(20,10))
+sns.swarmplot(x="day_of_week" , y="parent_incident_type", hue="council_district",data=df,palette="PRGn",ax=ax)
+plt.show()
